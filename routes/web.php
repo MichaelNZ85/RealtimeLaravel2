@@ -32,4 +32,8 @@ Route::get('/users', function () {
     return Inertia::render('Users');
 })->middleware(['auth', 'verified'])->name('users.all');
 
+Route::get('/game', function() {
+    return Inertia::render('Game');
+})->middleware(['auth', 'verified'])->name('game');
+
 require __DIR__.'/auth.php';
