@@ -1,8 +1,9 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {makeStyles, createStyles} from '@mui/styles';
 import {Box, Card, CardContent, Container, InputLabel, MenuItem, Select, Typography} from "@mui/material";
 import AuthenticatedLayout from "../Layouts/AuthenticatedLayout";
 import {range} from "lodash";
+import './Game.css';
 
 const useStyles = makeStyles((theme) =>
     createStyles({
@@ -23,7 +24,15 @@ const useStyles = makeStyles((theme) =>
             },
             time: {
                 color: theme.palette.primary.main,
-                fontSize: '2rem'
+                fontSize: '1rem'
+            },
+            lose: {
+                color: theme.palette.error.main,
+
+            },
+            win: {
+                color: '#1f6b1f',
+                fontSize: '1.5rem'
             }
         }
     ));
@@ -31,7 +40,35 @@ const useStyles = makeStyles((theme) =>
 
 const GamePage = (props) => {
     const classes = useStyles();
-    const [selectedBet, setSelectedBet] = useState(null);
+    const [selectedBet, setSelectedBet] = useState(0);
+    const [timer, setTimer] = useState(15);
+    const [isSpinning, setIsSpinning] = useState(false);
+    const [winningNumber, setWinningNumber] = useState(0);
+    const [hasResult, setHasResult] = useState(false);
+    const [didWin, setDidWin] = useState(null);
+
+    useEffect(() => {
+        window.Echo.channel('game')
+            .listen('RemainingTimeChanged', (e) => {
+                setHasResult(false);
+                setDidWin(null);
+                setTimer(e.time);
+                setIsSpinning(true);
+                setWinningNumber(0);
+            })
+            .listen('WinningNumberGenerated', (e) => {
+                setIsSpinning(false);
+                setWinningNumber(e.number);
+                setHasResult(true);
+                debugger;
+                if (selectedBet === e.number) {
+                    setDidWin(true)
+                } else {
+                    setDidWin(false);
+                }
+            })
+    },[]);
+
     return (
         <AuthenticatedLayout
             auth={props.auth}
@@ -45,21 +82,35 @@ const GamePage = (props) => {
                             <Box sx={{display: 'flex', flexDirection: 'row', justifyContent: 'center'}}>
                                 <Typography variant="h4">Game</Typography>
                             </Box>
-                            <img src='img/circle.png' alt="" height="250" width="250"/>
-                            <Typography variant="body1"></Typography>
-                            <hr className={classes.hr} />
-                            <Box sx={{display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 2}}>
+                            <img src='img/circle.png' className={isSpinning ? 'refresh' : ''} alt="" height="250" width="250"/>
+                            {hasResult && winningNumber !== 0 &&
+                                <Typography variant="h5">{winningNumber}</Typography>}
+                            <hr className={classes.hr}/>
+                            <Box sx={{
+                                display: 'flex',
+                                flexDirection: 'row',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                gap: 2
+                            }}>
                                 <InputLabel>Your Bet</InputLabel>
-                                <Select value={selectedBet}  onChange={(e) => setSelectedBet(e.target.value)} label="Not in">
+                                <Select value={selectedBet} onChange={(e) => setSelectedBet(e.target.value)}
+                                        label="Not in">
                                     {range(1, 12).map((num) => (
                                         <MenuItem value={num}>{num}</MenuItem>
                                     ))}
                                 </Select>
                             </Box>
-                            <hr className={classes.hr} />
+                            <p>Your bet is {selectedBet}</p>
+                            <hr className={classes.hr}/>
                             <p className={classes.time}>Remaining Time</p>
-                            <hr className={classes.hr} />
-
+                            {timer}
+                            <hr className={classes.hr}/>
+                            {hasResult &&
+                                <p className={didWin ? classes.win : classes.lose}>
+                                    {didWin ? 'You won!' : 'You lost. Better luck next time!'}
+                                </p>
+                            }
                         </Box>
                     </CardContent>
                 </Card>
