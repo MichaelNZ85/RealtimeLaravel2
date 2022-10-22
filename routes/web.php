@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ChatController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -35,5 +36,7 @@ Route::get('/users', function () {
 Route::get('/game', function() {
     return Inertia::render('Game');
 })->middleware(['auth', 'verified'])->name('game');
+
+Route::get('/chat', [ChatController::class, 'showChat'])->name('chat.show');
 
 require __DIR__.'/auth.php';
