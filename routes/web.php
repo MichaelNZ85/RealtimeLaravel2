@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\PageController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -16,27 +17,12 @@ use Inertia\Inertia;
 |
 */
 
-Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
-});
-
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
-Route::get('/users', function () {
-    return Inertia::render('Users');
-})->middleware(['auth', 'verified'])->name('users.all');
-
-Route::get('/game', function() {
-    return Inertia::render('Game');
-})->middleware(['auth', 'verified'])->name('game');
-
+Route::get('/', [PageController::class, 'index'])->name('root');
+Route::get('/dashboard', [PageController::class, 'dashboard'])->name('dashboard');
+Route::get('/users', [PageController::class, 'users'])->name('users.all');
+Route::get('/game', [PageController::class, 'game'])->name('game');
 Route::get('/chat', [ChatController::class, 'showChat'])->name('chat.show');
+Route::post('/chat/message', [ChatController::class, 'messageReceived'])->name('chat.message');
+Route::post('/chat/greet/{user}', [ChatController::class, 'greetReceived'])->name('chat.greet');
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

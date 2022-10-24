@@ -11,6 +11,9 @@ import {
 } from "@mui/material";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import {createStyles, makeStyles} from "@mui/styles";
+import {useEffectOnce} from "react-use";
+import axios from 'axios';
+import ChatItem from "@/Components/ChatItem";
 
 const useStyles = makeStyles((theme) =>
     createStyles({
@@ -40,45 +43,79 @@ const useStyles = makeStyles((theme) =>
             textAlign: 'center',
             fontSize: '1.3rem',
             paddingBottom: 2
+        },
+        link: {
+            cursor: 'pointer'
         }
-        // hr: {
-        //     color: theme.palette.grey.main,
-        //     background: theme.palette.grey.main,
-        //     borderColor: theme.palette.grey.main,
-        //     height: '1px',
-        //     width: '100%',
-        //     opacity: 0.5
-        // },
+
     })
 );
 
 const ShowChatPage = (props) => {
+    const {
+        auth: {
+            user: {
+                id: userId,
+            }
+        }
+    } = props;
     const classes = useStyles();
     const [enteredMessage, setEnteredMessage] = useState('');
     const [users, setUsers] = useState([]);
+    const [messages, setMessages] = useState([]);
 
-    useEffect(() => {
+    useEffectOnce(() => {
         window.Echo.join('chat')
             .here((users) =>{  //executed every time users first connects, e.g. on page refresh
                 console.log("First connection! Users are ", users);
                 setUsers(users);
             })
             .joining((user) => { // executed
-                console.log("Joining channel. Your user object is ", user);
-                setUsers([...users, user]);
+                console.log("Someone is joining the channel: ", user);
+                setUsers((users) =>[...users, user]);
             })
             .leaving((user) => { //executed
-                console.log("You are the weakest link. Goodbye", user);
+                console.log("Someone is leaving the channel: ", user);
                 setUsers((users) => users.filter((u) => u.id !== user.id));
-            });
+            })
+            .listen('MessageSent', (e) =>{
+                setMessages((messages) =>
+                    [
+                        ...messages,
+                        {message: e.message,
+                            userId: e.user.id,
+                            userName: e.user.name,
+                            timestamp: new Date(e.timestamp)
+                        }
+                    ])
+            })
+        ;
 
-    }, []);
+    });
+
+    useEffectOnce(() => {
+        window.Echo.private(`chat.greet.${userId}`)
+            .listen('GreetingSent', (e) => {
+                setMessages((messages) => [...messages, {message: e.message, timestamp: e.timestamp, isGreeting: true}]);
+            })
+    })
 
     const sendMessage = (e) => {
         e.preventDefault();
-        console.log(message);
-        //todo send request here
-        setEnteredMessage('');
+        // console.log(enteredMessage);
+        axios.post('/chat/message', {message: enteredMessage})
+            .then((res) => {
+                // console.log(res);
+                setEnteredMessage('');
+            })
+            .catch(e => {
+                console.error(e.message);
+            })
+
+    }
+
+    const greetUser = (userId) => {
+        axios.post(`/chat/greet/${userId}`).then(() => {}).catch((e) => console.error(e.message));
     }
 
     return (
@@ -94,8 +131,9 @@ const ShowChatPage = (props) => {
                             <Grid item xs={10}>
                                 <Box sx={{display: 'flex', flexDirection: 'column', gap: 1}}>
                                     <ul className={classes.msgList}>
-                                        <li>Test1: Meow</li>
-                                        <li>Test2: Big purrs</li>
+                                        {messages.map(m => (
+                                           <ChatItem messageObj={m} isMe={userId === m.userId} />
+                                        ))}
                                     </ul>
                                 </Box>
                                 <form onSubmit={sendMessage}>
@@ -120,7 +158,7 @@ const ShowChatPage = (props) => {
                                     <Typography variant="body1" className={classes.onlineTitle}><strong>Online now!</strong></Typography>
                                     <ul className={classes.onlineList}>
                                         {users.map(user => (
-                                            <li>{user.name}</li>
+                                            <li className={user.id !== userId ? classes.link : ''} onClick={() => greetUser(user.id)}>{user.name}</li>
                                         ))}
                                     </ul>
                                 </Box>
