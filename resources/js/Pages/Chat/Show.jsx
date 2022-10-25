@@ -79,6 +79,8 @@ const ShowChatPage = (props) => {
                 setUsers((users) => users.filter((u) => u.id !== user.id));
             })
             .listen('MessageSent', (e) =>{
+                console.log("Received message! ", e.message)
+                // debugger;
                 setMessages((messages) =>
                     [
                         ...messages,
@@ -93,16 +95,17 @@ const ShowChatPage = (props) => {
 
     });
 
-    useEffectOnce(() => {
-        window.Echo.private(`chat.greet.${userId}`)
-            .listen('GreetingSent', (e) => {
-                setMessages((messages) => [...messages, {message: e.message, timestamp: e.timestamp, isGreeting: true}]);
-            })
-    })
+    // useEffectOnce(() => {
+    //     window.Echo.private(`chat.greet.${userId}`)
+    //         .listen('GreetingSent', (e) => {
+    //             setMessages((messages) => [...messages, {message: e.message, timestamp: e.timestamp, isGreeting: true}]);
+    //         })
+    // })
 
     const sendMessage = (e) => {
         e.preventDefault();
         // console.log(enteredMessage);
+        // debugger;
         axios.post('/chat/message', {message: enteredMessage})
             .then((res) => {
                 // console.log(res);
