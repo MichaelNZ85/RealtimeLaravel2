@@ -19,7 +19,7 @@ class MessageSent implements ShouldBroadcast
 
     public User $user;
     public string $message;
-    public string $timestamp;
+//    public string $timestamp;
 
     /**
      * Create a new event instance.
@@ -30,7 +30,7 @@ class MessageSent implements ShouldBroadcast
     {
         $this->user = $user;
         $this->message = $message;
-        $this->timestamp = Carbon::now('UTC')->toIso8601ZuluString();
+//        $this->timestamp = Carbon::now('UTC')->toIso8601ZuluString();
     }
 
     /**
