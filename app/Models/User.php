@@ -50,4 +50,6 @@ class User extends Authenticatable
         'updated' => UserUpdated::class,
         'deleted' => UserDeleted::class,
     ];
+
+    protected $dateFormat = 'Y-m-d H:i:s';
 }
